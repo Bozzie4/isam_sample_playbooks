@@ -1,0 +1,75 @@
+# Sample variables for the change-policy-to-ssl-local-ldap
+
+#
+#  Make the ULH work (userlookuphelper)
+#
+change_feddirvars_runtime_configuration_entries_single:
+  entries:
+    - { resource_id: "ldap.conf", stanza_id: "ldap", entry_id: "host", value_id: "{{ inventory_hostname }}" }
+    - { resource_id: "ldap.conf", stanza_id: "ldap", entry_id: "port", value_id: "636" }
+    - { resource_id: "ldap.conf", stanza_id: "ldap", entry_id: "ssl-port", value_id: "636" }
+    - { resource_id: "pd.conf", stanza_id: "pdrte", entry_id: "user-reg-hostport", value_id: "636" }
+    - { resource_id: "pd.conf", stanza_id: "pdrte", entry_id: "user-reg-host", value_id: "{{ appliance_name }}" }
+
+change_feddirvars_runtime_configuration_entries:
+ - stanza_id: "bind-credentials"
+   resource_id: "ldap.conf"
+   entries:
+     -
+       - bind-dn
+       - "cn=root,secAuthority=Default"
+     -
+       - bind-pwd
+       - "{{ ldap_root_pwd }}"
+ - stanza_id: "pdrte"
+   resource_id: "pd.conf"
+   entries:
+     -
+       - user-reg-type
+       - ldap
+     -
+       - user-reg-server
+       - "{{ inventory_hostname }}"
+ - stanza_id: "ssl"
+   resource_id: "pd.conf"
+   entries:
+     -
+       - tls-v10-enable
+       - no
+     -
+       - tls-v11-enable
+       - no
+     -
+       - tls-v12-enable
+       - yes
+ - stanza_id: "ldap"
+   resource_id: "ivmgrd.conf"
+   entries:
+     -
+       - ssl-enabled
+       - true
+#
+# enable ssl on the reverse proxy instances
+#
+change_wrpvars_instance_config:
+  - inst_name: "default"
+    entries:
+     - { method: set, stanza: ldap, entry_name: ssl-enabled, value: "yes" }
+     - { method: set, stanza: ldap, entry_name: ssl-keyfile, value: "{{ custom_cert_store_name }}.kdb" }
+  - inst_name: "rp2"
+    entries:
+     - { method: set, stanza: ldap, entry_name: ssl-enabled, value: "yes" }
+     - { method: set, stanza: ldap, entry_name: ssl-keyfile, value: "{{ custom_cert_store_name }}.kdb" }
+
+#
+#
+#
+# Export dir to export stuff to
+#
+export_dir: "{{ playbook_dir }}/files/{{ inventory_dir | basename }}"
+# Ansible group that will own created directories.  Do not define to ignore on a windows machine
+#ansible_group_for_administrators: null
+# Group mode for the administrators on the created directories on the ansible host.  Do not define  to ignore on a windows machine
+#ansible_group_mode: null
+# For exporting and creating directories on the ansible host; use "become" to run as root
+ansible_use_become: false

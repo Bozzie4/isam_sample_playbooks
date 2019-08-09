@@ -1,0 +1,30 @@
+# main task to set multiple runtime values with the same key
+# Example:
+#  See defaults/main.yml
+# Also restart the reverse proxies
+---
+- name: Set runtime components - updated
+  isam:
+    appliance: "{{ inventory_hostname }}"
+    adminProxyProtocol: "{{ adminProxyProtocol | default(omit) }}"
+    adminProxyHostname: "{{ adminProxyHostname | default(omit) }}"
+    adminProxyPort: "{{ adminProxyPort | default(omit) }}"
+    adminProxyApplianceShortName: "{{ adminProxyApplianceShortName | default(omit) }}"
+    omitAdminProxy: "{{ omitAdminProxy | default(omit) }}"
+    username:  "{{ username }}"
+    password:  "{{ password }}"
+    lmi_port:  "{{ port | default(omit) }}"
+    log:       "{{ log_level | default(omit) }}"
+    force:     "{{ force | default(omit) }}"
+    action: ibmsecurity.isam.web.runtime.configuration.entry.set
+    isamapi:
+      resource_id: "{{ item.resource_id }}"
+      stanza_id: "{{ item.stanza_id }}"
+      entries: "{{ item.entries }}"
+  loop: "{{ policyserver_runtime_entries }}"
+  loop_control:
+    label: "Processing [{{ item.stanza_id | default('no stanza set') }}] - {{ item.resource_id | default('') }}"
+  notify: 
+    - Commit Changes
+    - Restart Web Runtime
+    - Restart Reverse Proxy

@@ -1,0 +1,4 @@
+# Default variables for exporting certificates from databases
+export_certificates: []
+# Default export Dir
+export_dir: "{{ playbook_dir }}/../certs/{{ inventory_dir | basename }}"

@@ -1,0 +1,29 @@
+# Default variables for setting runtime components
+policyserver_runtime_entries: []
+# Example:
+#
+# policyserver_runtime_entries:
+# - stanza_id: "ldap"
+#   resource_id: "ldap.conf"
+#   entries:
+#     -
+#       - basic-user-search-suffix
+#       - dc=iswga
+#     -
+#       - basic-user-search-suffix
+#       - dc=somecompany,dc=com
+#     -
+#       - ssl-v3-enable
+#       - no
+#     -
+#       - tls-v10-enable
+#       - no
+#     -
+#       - basic-user-principal-attribute
+#       - cn
+#     -
+#       - basic-user-no-duplicates
+#       - no
+#     -
+#       - basic-user-suffix-optimizer
+#       - no

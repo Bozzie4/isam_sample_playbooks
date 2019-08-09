@@ -1,0 +1,42 @@
+# main task for exporting certificates
+# Example inventory:
+#  export_certificates:
+#      kdb_id:     "{{ item.kdb_id }}"
+#      cert_id:    "{{ item.cert_id }}"
+#      filename:   "{{ inventory_dir }}/{{ item.filename }}"
+---
+- name: Make sure the export directories exists
+  become: "{{ ansible_use_become | default(false) }}"
+  file:
+    path: "{{ item.filename | dirname }}"
+    state: directory
+    group: "{{ ansible_group_for_administrators | default(omit) }}"
+    mode: "{{ ansible_group_mode | default(omit) }}"
+    recurse: true
+  with_items: "{{ export_certificates }}"
+  loop_control:
+     label: "Verifying {{ item.filename | dirname | default('.') }} exists ..."
+  when: item.filename is defined
+
+- name: Export certificates
+  isam:
+    appliance: "{{ inventory_hostname }}"
+    adminProxyProtocol: "{{ adminProxyProtocol | default(omit) }}"
+    adminProxyHostname: "{{ adminProxyHostname | default(omit) }}"
+    adminProxyPort: "{{ adminProxyPort | default(omit) }}"
+    adminProxyApplianceShortName: "{{ adminProxyApplianceShortName | default(omit) }}"
+    omitAdminProxy: "{{ omitAdminProxy | default(omit) }}"
+    username:  "{{ username }}"
+    password:  "{{ password }}"
+    lmi_port:  "{{ port | default(omit) }}"
+    log:       "{{ log_level | default(omit) }}"
+    force:     "{{ force | default(omit) }}"
+    action: ibmsecurity.isam.base.ssl_certificates.personal_certificate.export_cert
+    isamapi:
+      kdb_id:     "{{ item.kdb_id }}"
+      cert_id:    "{{ item.cert_id }}"
+      filename:   "{{ item.filename }}"
+  with_items: "{{ export_certificates }}"
+  loop_control:
+     label: "Exporting {{ item.cert_id | default('.') }} from {{ item.kdb_id | default('.') }} to {{ item.filename | default('.') }}"
+  when: item.cert_id is defined and item.kdb_id is defined and item.filename is defined

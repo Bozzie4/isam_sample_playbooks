@@ -1,0 +1,61 @@
+---
+# Modify the Policy server configuration to
+#   - local policy server
+#   - local ssl enabled ldap ( = remote ldap !)
+#
+#
+#  requires an export_dir to be set
+#  check the vars.yml file in this playbook directory to see the variables necessary to be set to actually make the change.
+#
+#  roles depend on the ibm roles in github, but these also include a few modified roles or new roles.
+- hosts: "all"
+  connection: local
+  gather_facts: yes
+  tasks:
+    - name: Export the embedded ldap public certificate to "{{ export_dir }}/certs/server.cer"
+      tags: ["ldap"]
+      include_role:
+       name: base/export_certificates
+      vars:
+          embeddedldap_keystore_name: embedded_ldap_keys
+          export_certificates:
+            - kdb_id: "{{ embeddedldap_keystore_name }}"
+              cert_id: "server"
+              filename: "{{ export_dir }}/certs/server.cer"
+      when: embeddedldap_keystore_name is defined
+
+    - name: "Upload the embedded ldap public certificate to the {{ custom_cert_store_name }}"
+      tags: ["certs"]
+      import_role:
+        name: base/upload_signer_certificates
+      vars:
+        inventory_dir: ""
+        custom_cert_store_name: yourcustomkeystore
+        upload_signer_certificates:
+          - kdb_id: "{{ custom_cert_store_name }}"
+            cert: "{{ export_dir }}/certs/server.cer"
+            label: "EmbeddedLdap"
+
+    - name: Additional configuration - change host in ldap.conf
+      tags       : ["ldap"]
+      import_role:
+        name: web/set_runtime_components
+      vars:
+         policyserver_runtime: "{{ change_feddirvars_runtime_configuration_entries_single }}"
+      when: change_feddirvars_runtime_configuration_entries_single is defined
+
+    - name: Additional configuration - multivalue attributes - policy server
+      tags: ["ldap"]
+      import_role:
+        name: web/set_runtime_components_multi
+      vars:
+         policyserver_runtime_entries: "{{ change_feddirvars_runtime_configuration_entries }}"
+      when: change_feddirvars_runtime_configuration_entries is defined
+
+    - name: Configuration of instances for ssl enabled ldap
+      tags: ["wrp"]
+      import_role:
+        name: web/configure_reverseproxy_instances
+      vars:
+        instances: "{{ change_wrpvars_instance_config }}"
+
